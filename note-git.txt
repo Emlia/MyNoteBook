@@ -1,0 +1,130 @@
+1.安装git
+1.1  
+在Linux上安装Git：sudo apt-get install git
+1.2  
+windows:https://git-for-windows.github.io(建议翻墙)
+1.3
+安装完成后，还需要最后一步设置，在命令行输入：
+$ git config --global user.name "Your Name"
+$ git config --global user.email "email@example.com"
+注意git config命令的--global参数，用了这个参数，表示你这台机器上所有的Git仓库都会使用这个配置，当然也可以对某个仓库指定不同的用户名和Email地址。
+2.创建版本库
+2.1
+通过cd, 进入工作区目录（MyGit）
+2.2
+通过git init命令把这个目录变成Git可以管理的仓库：
+$ git init
+2.3
+将readme.txt(代表要放入git的文件或文件夹)放入工作区
+2.4
+用命令git add告诉Git，把文件添加到缓存库：
+$ git add readme.txt
+2.5
+用命令git commit告诉Git，把缓存区的文件提交到版本库：
+$ git commit -m "wrote a readme file"
+2.6
+查看文件内容
+cat readme.txt
+3.版本回退
+3.1
+git status命令可以让我们时刻掌握仓库当前的状态
+$ git status
+3.2
+如果git status告诉你有文件被修改过，用git diff可以查看修改内容。
+git diff顾名思义就是查看difference，显示的格式正是Unix通用的diff格式
+$ git diff 
+3.3
+用git log命令查看历史记录。
+$ git log [--pretty=oneline]
+3.4
+回退到上一个版本
+$ git reset --hard HEAD^
+回退到上上一个版本
+$ git reset --hard HEAD^^
+回到某个版本
+$ git reset --hard 3628164
+git reflog用来记录你的每一次命令
+$ git reflog 
+3.5
+用git diff HEAD -- readme.txt命令可以查看工作区和版本库里面最新版本的区别.
+$ git diff HEAD -- readme.txt
+git diff 是工作区和 中间区比较
+$ git diff
+git diff --cached是中间区和仓库比较。
+$ git diff --cached
+
+3.6
+git reset HEAD的功能就是用来清空暂存区的
+如果修改1，add ，修改2，git checkout -- filename，工作区会和暂存区（修改1）的一样,即最后一次add
+如果修改1，add,commit ,修改2,git checkout -- filename,工作区会和版本库一样（修改1）,即最近一次commit的结果
+$ git checkout -- filename
+
+3.7
+git reset HEAD file清空缓冲区
+$git reset HEAD filename 
+
+3.8
+如果你删除了文件
+一是确实要从版本库中删除该文件，那就用命令git rm删掉，并且git commit
+$ git rm filename
+$ git commit -m "remove haha.txt"
+另一种情况是删错了，从版本库中恢复到最新版本
+$ git checkout -- filename
+
+4.1
+创建ssh key
+在用户主目录下，看看有没有.ssh目录，
+如果有，再看看这个目录下有没有id_rsa和id_rsa.pub这两个文件，
+如果已经有了，可直接跳到下一步。
+如果没有，打开Shell（Windows下打开Git Bash），创建SSH Key
+$ ssh-keygen -t rsa -C "youremail@example.com"
+4.2
+再github配置好后，把本地仓库的内容推送到GitHub仓库。
+关联一个远程库
+$ git remote add origin git@github.com:GitHub账户名/Github仓库名.git
+下一步，就可以把本地库的所有内容推送到远程库上
+$ git push -u origin master
+把本地库的内容推送到远程，用git push命令，实际上是把当前分支master推送到远程。
+
+由于远程库是空的，我们第一次推送master分支时，加上了-u参数，
+Git不但会把本地的master分支内容推送的远程新的master分支，
+还会把本地的master分支和远程的master分支关联起来，
+在以后的推送或者拉取时就可以简化命令。
+从现在起，只要本地作了提交，就可以通过命令：
+$ git push origin master
+
+4.3
+从远程库clone一个本地库，用命令git clone克隆一个本地库：
+$ git clone git@github.com:GitHub账户名/Github仓库名.git
+
+5.1
+创建分支
+$ git branch dev
+切换分支
+$ git checkout dev
+创建分支,并切换到该分支
+$ git checkout -b dev
+查看所有分支，在当前分支上有*标记。
+$ git branch
+git merge命令用于合并指定分支到当前分支。
+在master分支上:$ git merge dev
+删除分支
+$ git branch -d dev
+5.2
+1.如果合并有冲突，必须手动解决冲突后再提交。
+合并分支
+git merge dev1
+2.查看分支冲突
+git status
+3.手动解决冲突
+4.git add filename
+5. git add commit -m "note"
+6.查看分支合并情况
+$ git log --graph --pretty=oneline --abbrev-commit
+7.删除分支
+$ git branch -d dev
+
+
+www.liaoxuefeng.com
+
+
