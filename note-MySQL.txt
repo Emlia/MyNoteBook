@@ -1,3 +1,11 @@
+<<<<<<< HEAD
+=======
+
+username:feihuang  password:hhf771631347
+-----------
+1.MySQL不区分大小写，但推荐关键字大写
+2.在数据库中所有字符串类型，日期类型，必须使用单引号，不能使用双引号.
+>>>>>>> mysql complete
 c:\ProgramData\MySQL\MySQL Server 5.1\data
 该目录下的每一个目录名代表一个数据库(database)，里面每一个frm文件代表一个表(table)
 ------------------------------
@@ -17,3 +25,214 @@ my.ini MySQL的配置文件
 -u:指定用户名
 -p:指定密码
 -h:指定IP
+<<<<<<< HEAD
+=======
+-----------
+DDL
+1.数据库
+查看所有数据库：SHOW DATABASES
+切换（选择要操作的数据库）：USE 数据库名
+创建数据库：CREATE DATABASES [IF NOT EXISTS] mydb1 [CHARSET=utf8]
+删除数据库：DROP DATABASE [IF NOT EXISTS] mydb1
+修改数据库编码：ALTER DATABASE mydb1 CHARACTER SET utf8
+2.数据类型
+int
+double:double(5,2)表示最多5位，必须有2位小数，max=999.99
+decimal:浮点型，表示钱，不会出现精度损失问题
+char:固定长度字符串类型,最大char(255) 
+varchar:可变长度字符串类型,最大varchar(65553)
+text(clob):字符串类型(超大字符串)
+tinytext:大小 2^8-1B
+text :2^16-1B
+mediumtext；2^24-1B
+longtext;2^32-1B
+blob:字节类型
+tinyblob:2^8-1B
+blob:2^16-1B
+mediumblob；2^24-1B
+longblob:2^32-1B
+date:日期类型,yyyy-MM-dd
+time:时间类型,hh:mm:ss
+timestamp:时间戳类型 
+3.表 
+创建表 ：
+CREATE TABLE [IF NOT EXITS]表名(
+列名 列类型,
+列名 列类型,
+列名 列类型
+);
+查看当前数据库中所有表名称：SHOW TABLES；
+查看指定表的创建语句：SHOW CREATE TABLE 表名；
+查看表结构：DESC 表名；
+删除表：DROP TABLE 表名；
+修改表：
+前缀：ALTER TABLE 表名 
+添加列：ALTER TABLE 表名 ADD（
+		列名 列类型,
+		列名 列类型
+		)；
+修改列类型：（如果被修改的列已存在数据，可能会影响到已存在的数据)
+ALTER TABLE 表名 MODIFY 列名 列类型;
+修改列名:ALTER TABLE 表名 CHANGE 原列名 新列名 列类型;
+删除列：ALTER TABLE 表名 DROP 列名
+修改表名：ALTER TABLE 原表名 RENAME TO 新表名
+--------------
+DML(数据操作语言，对表记录进行操作（增、删、改）)
+1.插入数据
+INSERT INTO 表名(列名1，列名2，..) VALUES(列值1，列值2,...);
+2.修改数据 
+UPDATE 表名 SET 列名1=列值1，列名2=列值2，...[WHERE 条件]
+3.删除数据
+DELETE FROM 表名 [WHERE 条件]
+TRUNCATE TABEL 表名:先删除，再创建，无法回滚
+------------
+DCL
+1.创建用户
+用户只能在指定IP地址上登录
+CREATE USER 用户名@IP地址 IDENTIFIED BY '密码'；
+用户能在任意IP地址上登录
+CREATE USER 用户名@'%' INDENTIFIED BY '密码';
+2.给用户权限
+给用户分派指定数据库上的指定权限
+GRANT 权限1，..，权限n ON 数据库.* TO 用户名@IP地址
+例如：GRANT CREATE ,ALTER,DROP,INSERT,UPDATE,DELETE,SELECT ON mydb.* TO user1@localhost
+给用户分派指定数据库上所有权限
+3.撤销权限
+REMOVE 权限1，..，权限n ON 数据库.* FROM 用户名@IP地址；
+4.查看权限
+SHOW GRANTS FOR 用户名@IP地址；
+5.删除用户
+DROP USER 用户名@IP地址；
+-----------------------
+DQL   数据查询语言
+1.基本查询
+1）查询所有列
+SELECT * FROM emp；
+2）查询指定列
+SELECT 列1[，列2，...] FROM 表名；
+3）重复的几纪录只显示次
+SELECT DISTINCT *|列1[，列2，..] FROM 表名；
+4）列运算
+数值类型的列可以做加减乘除运算
+SELECT sal*1.5 FROM emp;
+字符串类型的列可以做连接运算
+SELECT CONCAT('我叫：',name,'我的工作是',job) FROM emp;
+转换NULL值，IFNULL（common，0）：如果common中存在NULL，那么当成0来运算
+SELECT IFNULL（common，0）+100 FROM emp；
+给列起别名
+SELECT name [AS] 姓名 FROM emp;
+2.条件控制
+1）条件查询
+
+
+SELECT *|列1[,列2，..,列n] FROM 表名
+[WHERE 条件]
+[ORDER BY 列名[ASC|DESC][,列名[ASC|DESC],...]]
+[GROUP BY 列名 [HAVING 条件]]
+
+
+2)模糊查询 LIKE
+'_':匹配任意一个字符
+'%':匹配任意多个字符
+姓名为空的查询不出来
+SELECT * FROM emp WHERE name LIKE '%';
+
+3.聚合函数
+1）COUNT
+计算所有列不为NULL的纪录的行数
+SELECT COUNT（*） FROM emp；
+2）MAX
+计算该列最大值
+3）MIN
+计算该列最小值
+4）SUM
+计算该列总值
+5）AVG
+计算该列平均值
+ 4.limit子句
+限定查询结果的起始行，以及总行数
+SELECT * FROM emp LIMIT 4,3；（下标从0开始）
+--------------------
+备份与恢复
+1.数据库导出SQL脚本
+mysqldump -u用户名 -p密码 数据库名>生成脚本文件路径
+不要打分号。不要登录mysql，直接在cmd下运行，生成的脚本文件不包含CREATE DATABASE语句
+例如：
+创建数据库mydb
+mysqldump -uroot -p123 mydb>c:\mydb.sql
+2.执行SQL脚本
+1）mysql -u用户名 -p密码 数据库<脚本文件路径
+注意事项同上；
+mysql -uroot -p123 mydb<c:\mydb.sql
+2)
+登录mysql
+source SQL 脚本路径
+例如：  创建数据库mydb
+		USE mydb
+		source c:\mydb.sql
+------------
+约束
+1.主键约束
+1）创建表时指定主键：该列指定主键后，不能为NULL，不能重复
+CREATE TABLE stu（
+sid CHAR(6) PRIMARY KEY,
+sname VARCHAR(20),
+age INTO);
+
+CREATE TABLE stu（
+sid CHAR(6),
+sname VARCHAR(20),
+age INT,
+PRIMARY KEY(sid)
+);
+2)修改表时指定主键：ALTER TABLE stu ADD PRIMARY KEY(sid)
+3)删除主键:ALTER TABLE stu DROP PRIMARY KEY;
+2.主键自增长
+主键为整形，不能为NULL，必须唯一.
+创建表时设置主键自增长
+CREATE TABLE stu(
+sid INT PRIMAR KEY AUT_INCREMENT,
+sname VARCHAR(20));
+修改表时设置主键自增长
+ALTER TABLE stu CHANGE sid sid INT AUTO_INCREMENT;
+删除主键自增长:ALTER TABLE stu CHANGE sid sid INT;
+3.非空约束
+CREATE TABLE stu (
+sid INT ,
+sname VARCHAR(20) NOT NULL);
+4.唯一约束
+CREATE TABLE stu (
+sid INT ,
+sname VARCHAR(20) UNIQUE);
+5.概念约束
+6.外键约束
+外键必须是另一个表的主键的值
+外键可以重复
+外键可以为空
+CONSTRAINT 约束名称 FOREIGN KEY (外键列名) REFERENCES 关联表(关联表的主键)
+7.数据库的一对一关系
+8.数据库多对多关系
+----------------
+合并结果集
+要求被合并的表中，列的类型和列数相同
+UNION，去除重复行
+UNION ALL，不去除重复行
+SELECT * FROM ab
+UNION ALL 
+SELECT * FROM cd;
+
+内连接：所有查询结果都满足条件
+方言：SElECT * FROM 表1 别名1，表2 别名2 WHERE 别名1.xx = 别名2.xx
+标准：SELECT * FROM 表1 别名1 INNER JOIN 表2 别名2 ON 别名1.xx = 别名2.xx
+自然：SELECT * FROM 表1 别名1 NATURAL JOIN 表2 别名2
+
+外连接
+左外：以左表为主，主表不论是否满足条件，都显示，左表不满足部分，右表都为空
+SELECT * FROM 表1 别名1 LEFT OUTER JOIN 表2 别名2 ON 别名1.xx=别名2.xx
+左外自然:
+SELECT * FROM 表1 别名1 NATURAL LEFT OUTER JOIN 表2 别名2 ON 别名1.xx=别名2.xx
+右外：以右表为主
+SELECT * FROM 表1 别名1 RIGHT OUTER JOIN 表2 别名2 ON 别名1.xx=别名2.xx
+右外自然:
+SELECT * FROM 表1 别名1 NATURAL RIGHT OUTER JOIN 表2 别名2 ON 别名1.xx=别名2.xx
+>>>>>>> mysql complete

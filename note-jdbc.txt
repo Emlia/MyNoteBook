@@ -1,0 +1,8 @@
+note-jdbc
+----------------
+jdbc 四大参数：
+1.driverClassName:com.mysql.jdbc.Driver
+2.url:jdbc:mysql://localhost:3306/数据库名
+3.username:root
+4.password:123
+-----------------
