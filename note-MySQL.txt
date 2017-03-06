@@ -1,0 +1,19 @@
+c:\ProgramData\MySQL\MySQL Server 5.1\data
+该目录下的每一个目录名代表一个数据库(database)，里面每一个frm文件代表一个表(table)
+------------------------------
+my.ini MySQL的配置文件
+配置MySQL端口 ，默认为3306
+配置字符编码：[client]下配置客户端编码：default-character-set=gbk
+	     [mysqld]下配置服务器端编码：character-set-server=utf-8
+配置二进制数据大小上限：max_allowed_packet=8M
+-------------------------------
+服务器操作：
+开启服务器：net start mysql
+关闭服务器：net stop mysql
+退出服务器：exit 或者 quit
+-------------------------------
+客户端操作：
+登录服务器：mysql -uroot -p123 -hlocalhost
+-u:指定用户名
+-p:指定密码
+-h:指定IP
