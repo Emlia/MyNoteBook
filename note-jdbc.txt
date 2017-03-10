@@ -6,3 +6,142 @@ jdbc 四大参数：
 3.username:root
 4.password:123
 -----------------
+//注册驱动
+Class.foName("com.mysql.jdbc.Driver");
+/*
+以上等价于：
+com.mysql.jdbc.Driver driver = new com.mysql.jdbc.Driver();
+DriverManger.registerDriver(driver);
+*/
+//创建连接
+Connect con = DriverManger.getConnection(
+"jdbc:mysql://localhost:3306/数据库名","root","123");
+/*
+通过Connection对象创建Statement
+statement是语句的发送器，它的功能是向数据库发送SQL语句
+调用它的int executeUpate(String sql),它可以发送DML,DDL,返回影响行数.
+*/
+Statement st = con.createStatement();
+String sql = "DELETE FROM mydb"
+int r = st.executeUpate(sql);
+当sql为查询语句时，会返回一个ResultSet
+ResultSet有一个行光标，让ResultSet的next()方法可以将光标下移一行，
+返回boolean表示当前行是否存在.
+ResultSet提供一系列getXxx()方法,参数：列编号或者列名
+getInt(1),getString(),getDouble(),getDate(),getTime(),getObject()
+
+String sql = "SELECT * FROM mydb"
+ResultSet st = con.executeUpate(sql);
+while(st.next()){
+int id  = st.getInt(1);
+String name  = st.getString("name");
+Double age  = st.getDouble("name");
+System.out.println(id+"   "+name+"  "+age);
+}
+//关闭资源
+rs.close();
+stmt.close();
+con.close();
+----------------------------------------------
+jdbc的代码规范
+1.在try外进行应用的定义
+2.在try内进行对象实例化
+3.在finally释放资源
+public void query(){
+Connection con = null;
+Statement st = null;
+ResultSet rs = null;
+try{
+con = getConnection();
+st = con.createStatement();
+String sql = "Select * FROM mydb";
+rs = st.executeUpate(sql);
+while(re.next()){
+String username = rs.getString("name");
+String password = rs.getString("password");
+system.out.println("username:"+username+"  password:"+password);
+}
+}catch(Exception e){
+throw new RuntimeException(e);
+}finally{
+}
+
+try{
+if(rs!=null) rs.close();
+if(st!=null) st.close();
+if(con!=null) con.close();
+}catch(SQLExcetion e){
+system.out.println("数据库关闭异常")
+}
+}
+--------------------
+statement 的方法
+int executeUpate(String sql) :
+可以执行create,alter,drop,insert,update,delete,返回影响行数
+ResultSet executeQuery(String sql):可以执行select
+boolean execute()可以执行以上两个，返回是否有结果集
+ResultSets表示结果集,有以下方法
+void beforeFirst():光标放到第一行
+void afterLast();光标放到最后一行
+boolean first();光标放到第一行，返回是否成功
+boolean last();
+boolean isBeforeFirst();光标是否在第一行前面
+boolean isAfterLast();
+boolean isFirst()光标是否在第一行
+boolean isLast();
+boolean previous();光标上移
+boolean next();光标下移
+boolean relative(int row)相对位移，row>0，下移row行;row<0,上移row
+boolean absolute(int row)绝对位移，光标移到指定行上
+int getRow()返回当前光标所有行
+
+获取结果集元数据
+得到元数据 ：rs.getMetaData(),返回值为ResultMtetaData;
+得到结果集列数：int getColumnCount()
+获取指定列的列名:String get ColumnName(int Index)
+
+结果集特性：当使用Connection的createStatement时，已经确定了Statement生成的结果集时什么特性.
+1.是否可滚动
+2.是否敏感
+3.是否可更新 
+
+con.createStatement():生成的结果集：不滚动，不敏感，不可更新(但mysql默认的都行)
+con.createStatement(int resultSetType,int resultSetConcurrency)
+resultSetType - 结果集类型，它是 :
+ResultSet.TYPE_FORWARD_ONLY:不滚动结果集
+ResultSet.TYPE_SCROLL_INSENSITIVE :滚动结果集，但结果集数据不会再随数据库而变化
+ResultSet.TYPE_SCROLL_SENSITIVE :滚动结果集，但结果集数据会再随数据库而变化（数据驱动可能不支持）
+resultSetConcurrency - 并发类型；它是 :
+ResultSet.CONCUR_READ_ONLY :结果集是只读的，不能通过修改结果集而反向影响数据库
+ResultSet.CONCUR_UPDATABLE ：结果集是可更新的，能通过修改结果集而反向影响数据库
+
+-----------------------------------------------
+得到PreparedStatement
+它是Statement接口的子接口
+防止SQL攻击
+提高代码的可读性，可维护性
+提高效率
+
+该功能mysql默认是关闭的，需要传入参数到url中，
+url="jdbc:mysql://localhost:3306/mydb?useServerPrepStmts=true&cachePrepStmts=true"
+
+
+
+1.得到PreparedStatement
+给出sql模板。所有参数用?替代
+调用Connection方法，得到PreparedStatement()
+
+String sql = "select * from t_user where username=? and password=?";
+PreparedStatement pstm = con. preparedStatement(sql);
+
+2.为参数传值
+pstm的一系列setXxx（）方法
+pstm.setString(1,username);
+pstm.setString(2.password);
+
+pstm.executeQuery(); 
+-------------------------------
+大数据，
+批处理
+略。。。
+------------------------------
