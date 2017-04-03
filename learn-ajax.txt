@@ -1,0 +1,115 @@
+学习ajax
+使用XMLHttpRequest进行异步数据检索
+----------------- 
+http是计算机通过网络进行通信的规则
+http是一种无状态的协议
+------------------
+一个完整的http请求的过程
+1.建立TCP连接
+2.WEB浏览器向WEB服务器发送请求命令
+3.WEB浏览器发送请求头信息
+4.WEB服务器应答
+5.WEB服务器发送应答头信息
+6.WEB服务器向浏览器发送数据
+7.WEB服务器关闭TCP连接
+
+一个http请求一般由四部分组成
+1.http请求的方法或动作，比如是GET还是POST请求
+2.正在请求的URL
+3.请求头，包含一些客户端环境信息，身份验证信息等
+4.请求体，即请求正文，包含客户提交的查询字符串信息，表单信息等。
+
+
+GET：一般用于信息获取，查询，获取操作
+	使用URL传递参数
+	对所发送信息的数量也有限制，一般在2000个字符。
+POST：一般用于修改服务器上的资源，
+	对所发送信息的数量无限制。
+	
+一个http响应一般由三个部分组成
+1.一个数字和文字组成的状态码，用来显示请求成功还是失败
+2.响应头，与请求头类似，包含服务器类型，日期时间，内容类型和长度等
+3.响应体，也就是响应正文。
+
+
+http状态码一般由3位数字构成
+1XX：信息类，表示收到WEB浏览器请求，正在进一步的处理中
+2XX：成功，表示用户请求被正确接受，理解和处理。例如：200 OK
+3XX：重定向，表示请求没有成功，客户必须采取进一步的动作。
+4XX：客户端错误。表示客户端提交的请求有错误。例如：404 NOT FOUND
+5XX： 服务器错误，表示服务器不能完成对请求的处理.
+
+-----------------------------------
+XMLHttpRequest对象的发送方法
+open(methond,url,async)  请求的类型，URL，是否异步
+send(string) 
+---------------
+XMLHttpRequest对象取得响应
+responseText :获取字符串形式的响应数据
+responseXML  :获取XML形式的响应数据
+status和 statusText:一数字和文本形式返回http状态码
+getAllResponseHeader():获取所有的响应包头
+getResponseHeader()   :查询响应中的某个字段的值
+
+readyState属性
+->0：请求为初始化,open还没调用
+->1: 服务器连接已建立,open已经调用
+->2: 请求已接受，即接受到头信息了
+->3: 请求处理中,接受到响应体了
+->4: 请求已完成，响应完成了
+
+通过xmlhttprequest的onreadystatechange监听
+var request = new XMLHttpResquest();
+request.open("GET","get.php",true);
+request.send();
+request.onreadystatechange=function(){
+if(request.readyState===4&&request.status===200){
+//do something
+}
+}
+-------------------------------
+json与xml的比较
+1.json的长度比xml格式更短小，利于传输
+2.json读写速度更快
+3.json可以使用js内建的方法直接进行解析，转换成js对象
+
+json的书写格式是：键值对  ：如 "name":"feihaung"
+json的值可以是以下类型
+数字（整数或浮点数）
+字符串（在双引号中）
+逻辑值（true或false）
+数组（在方框号中）
+对象（在花括号中）
+null
+
+var data = '{"a":"aaa"}';  
+var jsonobj = JSON.parse(data); 
+alert(jsonobj.a.length);
+----------------------------------
+jQuery实现Ajax
+
+jQuery.ajax([setting])
+->type:类型，“POST”或“GET”，默认“GET”
+->url :发送请求的地址
+->data:是一个对象，连同请求发送到服务器的数据
+->dataType:预期服务器返回的数据类型,如果不指定,jQuery将自动根据http 包MIME信息来智能判断，
+一般我们采用json格式，可以设置为"json"
+->success:是一个方法，请求成功后的回调函数，传入返回后的数据，以及包含成功代码的字符串
+->error:是一个方法，请求失败时调用此函数,传入XMLHttpResquest对象.
+
+-----------------------------------
+处理跨域的方法，
+1.代理
+2.jsonp:JSONP不支持POST请求，只支持GET请求
+ajax中请求域名，有同域的限制，跨域名请求资源会报错。
+而Jsonp利用script标签中src可以请求任何域名资源的特点。
+比如A域名向B域名跨域申请资源，这时在A域名申明，
+同时用script申请调用B域名JS文件。在B域名的js文件中调用A域名的申请。从而完成跨域请求
+3.XHR2
+IE10以下的版本都不支持
+在服务器端进行改造
+header('Access-Control-Allow-Origin:*');
+header('Access-Control-Allow-Methods:POST,GET');
+---------------
+ajax的核心是通过XmlHttpRequest获取非本页内容，
+而jsonp的核心则是动态添加<script>标签来调用服务器提供的js脚本
