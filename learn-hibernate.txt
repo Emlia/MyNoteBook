@@ -1,0 +1,759 @@
+hibernate学习笔记
+
+-----------------------
+搭建环境
+1.required文件下的所有jar包
+2.jpa包下的jar包
+3.日志jar包
+4.mySQL驱动jar包
+--------------------------
+1.创建实体类
+2.使用hibernate的时候，会自动创建表单
+3.实体类和表单的映射关系的配置文件
+->映射关系的配置文件:建议在实体类中创建，实体类名称.hbm.xml
+->在xml配置文件中引入约束
+--------------------
+		<?xml version="1.0" encoding="UTF-8"?>
+		<!DOCTYPE hibernate-mapping ....约束名>
+		<hibernate-mapping>
+			<!--1.配置类与表对应 -->
+			<class name="实体类全路径" table="数据库表单名">
+				<!--2.配置实体类属性与表单的字段名对应-->
+				<!--配置主键-->
+				<id name="实体类中id属性名称" column="表单的字段名">
+					<!-- id的增长策略-->
+					<generator class="native"></generator>
+				</id>
+				<!--配置其他字段-->
+				<property name="实体类属性" column="表单的字段名"></property>
+			</class>
+		</hibernate-mapping>
+
+4.创建hibernate核心配置文件
+->格式：xml
+->文件名：固定的：hibernate.cfg.xml
+->位置：必须src下,即编译后再class目录
+->引入约束
+->hibernate操作过程中，只会加载核心配置文件
+->内容：
+	1.配置数据库信息
+	2.配置hibernate信息
+	3.引入映射文件
+	------------
+	<?xml version="1.0" encodeing="UTF-8"?>
+	<! DOCTYPE hibernate-configuration...约束名>
+	<hibernate-configuration>
+		<session-factory>
+		<!--1.配置数据库信息(必须有)-->
+			<property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
+			<property name="hibernate.connection.url">jdbc:mysql:///myDB</property>
+			<property name="hibernate.connection.username">root</property>
+			<property name="hibernate.connection.password">root</property>
+			
+		<!--2.配置hibernate信息,可选-->
+		<!--输出底层sql语句-->
+		<property name="hibernate.show_sql">true</property>
+		<!--输出底层sql语句格式-->
+		<property name="hibernate.format_sql">true</property>
+		<!--hibernate帮助创建表
+		update:如果已经有表，更新，如果没有，创建
+		-->
+		<property name="hibernate.hbm2ddl.auto">update</property>
+		<!--配置方言-->
+		<property name="hibernate.dialect ">org.hibernate.dialect.MySQLDialect</property>
+		<!--3.配置映射文件-->
+		<mapping resource="com.feihuang/entity/User.hbm.xml"/>
+		</session-factory>
+	</hibernate-configuration>
+	
+------------------------------------------------------
+使用hibernate
+1.创建hibernate核心配置文件
+	Configuration cfg = new Configuration();
+	cfg.confgure();
+2.加载SessionFactory对象
+	Sessionfactory sessionFactory = cfg.buildSessionfactory();
+3.使用SessionFactory创建session对象
+	Session session = sessionFactory.openSession();
+4.开启事务
+	Transaction tx = session.beginTransaction();
+5.写具体逻辑crud操作
+	User user = new User();
+	user.setName();
+	
+	session.save(user);
+6.提交事务
+	tx.commit();
+7.关闭资源
+	session.close();
+	sessionFactory.close();
+-------------------------------
+映射文件
+1.映射文件中，id和property标签,column属性可以省略，默认与name属性一致
+2.映射文件中，property标签的type属性，设置表单字段名称的类型,默认自动对应类型
+-------------------------------
+1.Configuration cfg = new Configuration();
+cfg.confgure();
+到src下面找hibernate.cfg.xml配置文件,创建对象，加载核心配置文件信息到对象中。
+2.SessionFactory 
+->根据核心配置文件中，数据库配置，hibernate配置信息，映射文件，到数据库中根据映射关系创建表单。
+->创建Sessionfactory过程特别消耗资源，建议一个项目，只创建一个sessionFactory对象
+	可以写一个工具类，加载核心文件，返回sessionFactory
+	public class HibernateUtils{
+	private static final Configuration configuration;
+	private static final SessionFactory sessionfactory;
+	static{
+	configuration = new Configuration().confgure();
+	sessionfactory = configuration.buildSessionfactory();
+	}
+	public static SessionFactory getSessionFactory(){
+		return sessionfactory;
+	}
+	}
+3.Session
+->类似于jdbc中的connection
+->调用session里的不同方法实现crud操作
+	1.添加save方法
+	2.修改update方法
+	3.删除delete方法
+	4.根据id查询get方法
+->session对象单线程对象
+	1.session对象不能共用，只能自己使用
+	
+4.Transaction
+->开启事务：Transaction tx = session.beginTransaction();
+->提交事务：tx.commit();
+->回滚事务: tx.rollback();
+---------------------------------------
+实体类编写规则
+	1.实体类中的属性是私有的
+    2.私有属性要有公开的set,get方法
+	3.主键对应的属性必须唯一
+	4.不建议使用基本数据类型，推荐使用对应的包装类
+	int - Integer
+	char - Character
+---------------------------------------
+主键的生成策略
+<generator class="native"></generator>
+	1.increment:用于long,short,int 类型,有hibernate自动以递增的方式生成唯一的标识符。每次增量为一。
+	2.identity:条件：数据库支持自动增长数据类型
+	3.sequenen:条件：数据库支持序列生成标识符
+	4.native:根据底层数据库对自动生成标识符的能力来选择identity,sequenen,hilo三种生成器中的一种
+	5.uuid:采用128位的uuid算法生成标识符,id必须为String类型
+	6.assigned:由java程序负责生成标识符，如果不指定id元素的generator属性，则默认使用该主键生成策略
+-----------------------------------------
+实现类操作
+	1.调用session里面的save方法实现
+		User user = new User();
+		user.setId(1);//如果设置了主键自动增长策略，则setId()无效
+		user.setName("feihuang");
+		session.save();
+	2.根据id查询纪录
+		/*调用session的get方法
+			第一个参数：实体类的class
+			第二个参数:id值
+		*/
+		User user = session.get(User.class,1);
+	3.修改参数
+		//第一种方法
+		1.根据id查询
+			User user = session.get(User.class,2);
+		2.修改值
+			user.setName("hhf");
+		3.调用session的update修改
+			session.update(user);
+		//第二中方法，由于是创建的一个新对象，没有设置值的属性会为null
+		1.创建User对象
+			User user = new User();
+		2.设置主键为想要修改的id
+			user.ssetId(1);
+		3.调用session的update修改
+			session.update(user);
+	4.删除
+		//第一种方法
+		1.根据id查询
+			User user = session.get(User.class,1);
+		2.调用session的delete方法
+			session.delete(user);
+		//第二种方法
+		User user = new User();
+		user.setId(3);
+		session.delete(user);
+-------------------------------------------
+实体类对象的状态
+1.瞬时态
+	1.对象中没有id值
+	2.跟session没有关系
+		User user = new User();
+		user.setName("feihuang");
+2.持久态
+	1.对象里有id值
+	2.对象与session关联
+		User user = session.get(User.class,1);
+3.脱管态
+	1.对象有id值
+	2.根session没有关联
+		User user = new User();
+		user.setId(1);
+
+session的saveOrUpdate方法
+	1.实体类对象状态是瞬时态，做添加
+	2.实体类对象状态是持久态，做修改，只修改改变的值
+	3.实体类对象状态是脱管态，做修改，修改所有值，如果某属性没设置，则为null;
+---------------------------------------------------------------
+hibernate缓存
+	1.一级缓存
+		1.默认打开
+		2.使用范围，session范围,从session创建到session关闭
+		3.存储的数据必须是持久态数据
+		比如:进行两次根据id查询同一id，实际只会查询一次.
+		效果：持久态对象会自动更新，不需要调用session.update(user)也能更新.
+		实现过程：
+		------------------------------
+		1.User user = session.get(id);
+			创建一级缓存区和对应的快照区，都放入得到的该对象
+				---------------------
+				-一级缓存区
+				-user
+				---------------------
+				-快照区（副本）
+				-user
+				---------------------
+		2.user.setName("feiahuang");
+			修改了user对象，修改的对象被保存到一级缓存区，不会保存到对应的快照区
+				---------------------
+				-一级缓存区
+				-user（修改）
+				---------------------
+				-快照区
+				-user
+				--------------------- 
+		3.tx.commit();事务提交
+			比较一级缓存区的对象和对应的快照区是否相同
+			相同：不做操作
+			不同：将一级缓存区的对象更新到数据库中.
+		
+		------------------------------
+	2.二级缓存
+		1.目前不使用，替代技术redis
+		2.默认不打开，需要配置
+		3.使用范围：SessionFactory范围
+--------------------------------------------
+事务的隔离级别
+mySQL 默认 3
+在核心配置文件中
+<property name="hibernate.connection.isolation">4</property>
+
+1-Read uncommitted isolation
+2-read committed isolation
+4-Repeatable read isolation
+8-Serializable isolation		
+------------------------------------------
+hibernate事务代码书写规范
+try{
+开启事务
+提交事务
+}catch(){
+回滚事务
+}finally{
+关闭资源
+}
+
+-----------------
+SessionFactory sessionFactory=null;
+Session session=null;
+Transaction tx=null;
+try{
+sessionFactory = HibernateUtils.getSessionFactory();
+session = sessionFactory.openSession();
+//开启事务
+tx=session.beginTransaction();
+//crud操作
+User user = new User();
+user.setName("feihuang");
+session.save(user);
+//提交事务
+session.commit();
+}catch(Exception e){
+//回滚事务
+tx.rollback();
+}finally{
+session.close();
+sessionFactory.close();
+}
+----------------------------------
+session 与本地线程绑定
+在核心 配置文件中
+<property name="hibernate.current_session_context_class">thread</property>
+	1.thread:Session对象的生命周期与本地线程绑定
+	2.jta：Session对象的生命周期与JTA事务绑定
+	3.managed:Hibernate委托程序来管理Session对象的生命周期
+
+hibernate提供一个sessionFactory.getCurrentSession()创建一个session和ThreadLocal绑定方法(必须配置才能得到)
+
+故可在HibernateUtils.java中添加一个方法
+public static Session getCurrentSession(){
+	return sessionFactory.getCurrentSession();
+}
+
+
+
+Session session=null;
+Transaction tx=null;
+try{
+session = HibernateUtils.getCurrentSession();
+//开启事务
+tx=session.beginTransaction();
+//crud操作
+User user = new User();
+user.setName("feihuang");
+session.save(user);
+//提交事务
+session.commit();
+}catch(Exception e){
+//回滚事务
+tx.rollback();
+}finally{
+//session.close();//获取与本地线程绑定的session的时候，关闭session会报错，线程结束时会自动关闭，不需要手动关闭
+//sessionFactory.close();//在实际WEB开发中，不需要关闭sessionFactory,sessionFactory在静态代码块中初始化，一但关闭就没了
+}
+---------------------------------------------------------
+Hibernate API使用
+1.Query对象
+	1.使用query对象，不需要写sql语句，要写hql语句（hibernate query language）
+	2. sql与hql语句的区别：
+		使用sql操作表和表字段
+		使用hql操作实体类和属性
+	3.查询所有hql语句
+		from 实体类名称
+	4.Query对象的使用
+		1.创建Query对象，传入hql语句
+			Query query = session.createQuery("from User");
+		2.调用query对象的list()方法,得到结果
+			List<User> list = query.list();
+2.Critich对象
+	1.使用这个对象查询操作，不需要查询语句，直接调用
+	2.使用Criteria
+		1.创建criteria对象，传入实体类的类型
+			Criteria criteria = session.createCriteria(User.class);
+		2.调用criteria对象的list()方法，得到结果
+			List<User> list  =criteria.list();
+3.SQLQuery对象
+	1.调用底层sql实现
+	2.使用SQLQuery
+		1.创建对象
+			SQLQuery sqlQuery = session.createSQLQuery("select * from t_user");
+		2.1返回list集合，默认数组结构
+			List<Object[]> list = sqlQuery.list();
+			for(Object[] objects:list){
+				System.out.println(Arrays.toString(objects));//Arrays.toString()将数组的内容作为字符串输出
+			}
+		2.2故，需要提前设置返回值类型,结果返回对象类型
+			sqlQuery.addEntity(User.class);
+			List<User> list = sqlQuery.list();
+			
+------------------------------------------------------------------------
+表与表的关系
+1.一对多
+
+	A表
+	-------------------
+	- id  att1 att2
+	- 1
+	- 2
+	- 3
+	--------------------
+	
+	B表
+	-------------------
+	- id  att1 att2  aid
+	- 1               1
+	- 2               1
+	- 3               2
+	--------------------
+2.多对多
+	A表
+	-------------------
+	- id  att1 att2
+	- 1
+	- 2
+	- 3
+	--------------------
+	B表
+	-------------------
+	- id  att1 att2
+	- 1
+	- 2
+	- 3
+	--------------------
+	C表
+	-------------------
+	- id  aid bid
+	- 1    1   2
+	- 2    2   3
+	- 3    3    1
+	--------------------
+3.一对一
+---------------------------------------------
+hibernate 一对多操作
+以客户和联系人为例，一个客户有多个联系人，外键在多的一方
+	1在客户实体类中，表示多个联系人,一个客户有多个联系人
+		hibernate要求使用集合表示多的数据，使用Set集合
+		private Set<LinkMan> setLinkMan = new HashSet<LinkMan>();
+		以及对应的  get，set方法
+	2.在联系人实体类中，表示联系人所属的客户，一个联系人只属于一个客户
+		private Customer customer;
+		以及对应的  get, set方法
+	3.配置映射关系
+		1.建立映射文件
+		2.配置基本映射关系
+		3.客户的映射文件
+		  <class name="类的全路径名" table="表单名">
+			<id name = "实体类中表示主键的属性" column="表单中的主键名">
+				<!--主键生成策略-->
+				<generator class="native"></generator>
+			</id>
+			<property name="实体类中属性名" column="表单中的字段名"></property>
+			<!--在客户映射文件中，表示所有联系人
+				使用set标签表示所有联系人
+					name:实体类中set集合的属性名
+			-->
+			<set name="setLinkMan">
+				<!-- 一对多建表，有外键
+					hibernate机制：双向维护
+					column:外键的名称
+				-->
+				<key column="child"></key>
+				<!--
+					class:对应属性的类型的全路径名
+				-->
+				<one-to-many class="com.feihuang.entity.LinkMan"/>
+			</set>
+		 </class>
+		4.联系人映射文件
+			<!--表示联系人所属客户
+				name:联系人实体类中的属性名
+				class:联系人实体类中的属性的类型的全路径名
+				column:外键的名称
+			-->
+			<many-to-one name="customer" class="com.feihaung.entity.Customer" column="child"></many-to-one>
+-----------------------
+一对多的级联操作
+1.级联保存
+	->添加一个客户，为这个客户添加多个联系人 
+	->第一种方法：
+		//创建对象
+		Customer customer = new Customer();
+		customer.setName("feihuang");
+		LinkMan linkman = new LinkMan();
+		linkman.setName("hhf");
+		//建立关系
+		Customer.getSetLinkMan().add(linkman);
+		linkman.setCustomer(customer);
+		//保存到数据库
+		session.save(customer);
+		session.save(linkman);
+		
+	->第二中方法：
+		一般根据客户添加联系人
+		1.在客户映射文件中进行配置
+			在set标签中添加一个属性 cascade="save-update"
+			<set name="setLinkMan" cascade="save-update">
+		2.创建客户和联系人对象，只需要把联系人放到客户里面就可以了，最终只需要保存客户即可
+		
+	
+2.级联删除
+	->删除一个客户，这个客户里面的所有联系人也删除
+	1.在客户映射文件中进行配置
+			在set标签中添加一个属性 cascade="delete"
+			<set name="setLinkMan" cascade="delete">//如果有多个值，中间用英文分号隔开,"save-update,delete"
+	2.在代码中删除即可
+		Customer customer = session.get(Customer.class,1);
+		session.delete(customer);
+		->执行过程：
+		1.根据id查客户
+		2.根据外键查联系人
+		3.设置联系人外键为null
+		4.删除联系人
+		5.删除客户
+------------------------------------------
+1.一对多的修改操作
+	让linkman1不属于customer1,属于customer2
+	Customer customer2 = session.get(Customer.class,2);
+	LinkMan linkman1 = session.get(LinkMan.class,1);
+	customer2.getSetLinkMan().add(linkman1);
+	linkman1.setCustomer(customer2);
+
+2.inverse属性
+	->因为hibernate是双向维护外键，客户和联系人都需要维护外键，修改客户时修改一次外键，修改联系人的时候修改一次外键.
+	->可以让其中的一方放弃外键的维护
+	->让一的一方放弃维护外键
+	->在放弃关系维护映射文件中，进行配置，在set标签上使用inverse属性，默认false，不放弃，设为true,表示放弃
+
+-------------------------------------------------------
+多对多映射操作
+以用户和角色为例
+1.创建实体类
+2.让两个实体类之间相互表示
+	1.一个用户有多个角色，使用set集合
+		private Set<Role> setRole = new HashSet<Role>();
+		以及对应的set,get方法；
+	2.一个角色有多个用户，使用set集合
+		private Set<User> setUser = new HashSet<User>();
+		以及对应的set，get方法;
+3.配置映射文件
+	1.用户实体类的映射配置文件
+		<!--
+			使用set标签，表示所有角色
+			name:角色set集合名称
+			table:第三张表名称
+		-->
+		<set name="setRole" table="user_role">
+			<!--配置当前映射文件在第三张表中外键的名称-->
+			<key column="userid"></key>
+			<!--
+				class:角色实体类全路径
+				column:角色在第三张表外键的名称
+			-->
+			<many-to-many class="com.feihaung.entity.Role" column="roleid"></many-to-many>
+		</set>
+	2.角色映射配置文件
+		<set name="setUser" table="user_role">
+			<key column="roleid"></key>
+			<many-to-many class="com.feihuang.entity.User" column="userid"></many-to-many>
+		</set>
+	3.第三张表单的主键是（userid,roleid）,同时，userid,roleid都是外键
+4.在核心配置文件中引入映射文件
+--------------------------------------------
+1.多对多的级联保存
+	1.在用户配置文件中set标签进行配置,cascade="save-update"
+	2.创建user1,user2,role1,role2,role3
+		User user1 = new User();
+		user1.setName("user1");
+		其他省略...
+	3.建立关系,user1有角色1，2；user2有角色2,3；
+		user1.getSetRole().add(r1);
+		user1.getSetRole().add(r2);
+		user2.getSetRole().add(r2);
+		user2.getSetRole().add(r3);
+	4.保存到数据库
+		session.save(user1);
+		session.save(user2);
+	
+2.多对多的级联删除(不常用，一般直接操作第三张表)
+	1.在set标签上进行配置,cascade="delete"
+	2.查询User,调用session的delete方法
+		User user = session.get(User.class,id);
+		session.delete(user);
+3.多对多维护第三张表
+	1.某个用户添加某个角色
+		1.根据id查询用户和角色
+			User user =session.get(User.class,id);
+			Role role =session.get(Role.class,id);
+		2.把角色对象放到用户set集合
+			user.getSetRole().add(role);
+		
+	2.某个用户删除某个角色
+		1.根据id查询用户和角色
+			User user =session.get(User.class,id);
+			Role role =session.get(Role.class,id);
+		2.从用户的set集合里去除角色
+			user.getSetRole().remove(role);
+	
+---------------------------------------------------
+hibernate查询方式
+1.对象导航查询
+	->根据id查客户，再查询该客户里面所有的联系人
+		Customer customer = session.get(Customer.class,1);
+		Set<LinkMan> linkman = customer.getSetLinkMan();
+		
+2.OID查询
+	->根据id查询某一条记录，返回对象
+		Customer customer = session.get(Customer.class,1);
+3.hql查询
+	->Query对象查询，写hql语句实现查询,hql操作实体类和属性
+	1.查询所有
+		Query query = session.createQuery("from Customer");
+		List<Customer> list = session.list();
+	2.条件查询
+		->from 实体类名 where 实体类属性名称=？ and 实体类属性名称 like ?;
+		Query query = session.createQuery("from Customer c where  c.cid=? and c.name=?");
+		//第一个参数：int类型 ，？的位置，从0开始。第二个参数：具体的参数值。
+		query.setParameter(0,1);
+		query.setParameter(1,"feiahuang");
+		list<Customer> list = query.list();
+		模糊查询：%任意字符，_单个字符 
+	3.排序查询
+		->from 实体类名称 order by 实体类属性名称 asc/desc
+	4.分页查询
+		->Query query = session.createQuery("from Customer");
+		  //设置开始的位置
+		  query.setFirstResult(0);
+		  //设置每页记录数
+		  query.setMaxResults(3);
+		  List<Customer> list = query.list();
+	5.投影查询，查询部分字段的值
+		->select 实体类属性名称1，实体类属性名称2 from 实体类名称//实体类属性名称不能写*
+		Query query = session.createQuery("select name from Customer");
+		List<Object[]> list = query.list();
+	6.聚集函数的使用
+		1.常用的聚集函数：count,sum,avg,max,min
+			Query query = session.createQuery("select count(*) from Customer");
+			//返回唯一值
+			Object obj = query.uniqueResult();
+			
+4.QBC查询
+	->Criteria对象
+		1.查询所有
+			Criteria criteria = session.createCriteria(Customer.class);
+			List<Customer> list = criteria.list();
+		2.条件查询
+			Criteria criteria = session.createCriteria(Customer.class);
+			//添加条件
+			criteria.add(Restrictions.eq("cid",1));
+			criteria.add(Restrictions.eq("cname","hhf"));
+			List<Customer> list=criteria.list();
+			------------------------------------
+			Restrictions.eq       =
+			Restrictions.allEq    使用Map,使用key/value进行多个等于的判断
+			Restrictions.gt       >
+			Restrictions.ge       >=
+			Restrictions.lt       <
+			Restrictions.le       <=
+			Restrictions.between  对应sql的between子句
+			Restrictions.like     对应sql的like子句
+			Restrictions.in       对应sql的in子句
+			Restrictions.and      and关系
+			Restrictions.or       or关系
+			Restrictions.sqlRestriction sql限定查询
+			Restrictions.asc()    传入字段进行升序排序
+			Restrictions.desc()   传入字段进行降序排序
+ 			------------------------------------
+		3.排序查询
+			1.创建对象
+				Criteria criteria = session.createCriteria(Customer.class);
+			2.设置对那个属性进行排序，设置排序规则
+				criteria.addOrder(Order.asc("cid"));//Order.desc("");desc是降序
+			3.得到结果
+				List<Customer> list = criteria.list();
+		4.分页查询
+			1.创建对象
+			2.舍子分页数据
+				//设置开始位置，显示记录数
+				criteria.setFirstResult(0);
+				criteria.setMaxResults(3);
+			3.得到结果
+		5.统计查询:  count(*)
+			1.创建对象
+			2.设置操作
+				criteria.setProjection(Projections.rowCount());
+			3.得到结果
+				Object obj=criteria.uniqueResult();
+				Long lobj = (Long) obj;
+				int count = lobj.intValue();
+		6.离线查询:不使用session对象得到结果
+			1.创建对象
+				DetachedCriteria detachedCriteria = DetachedCriteria.forClass(Customer.class);
+			2.最终执行的时候才需要session
+				Criteria criteria = detachedCriteria.getExecutableCriteria(session);
+			3.得到结果
+				List<Customer> list = criteria.list();
+			4.应用场景：servlet 调用 service,service调用dao;可以在service拼接语句到dao中执行.
+			
+5.本地sql查询
+	->SQLQuery对象，使用普通的sql实现查询
+--------------------------------------------------------------
+多表查询
+MySQL中的多表查询 
+1.内连接
+	select * from t_customer c,t_linkman l  where c.cid=l.lid;
+	select * from t_customer c inner join t_linkman l  on c.cid=l.lid;
+2.左外连接
+	select * from t_customer c left outer join t_linkman l  on c.cid=l.lid;
+3.右外连接
+	select * from t_customer c right outer join t_linkman l  on c.cid=l.lid;
+
+Hql多表查询
+1.内连接
+	1.from 实体类名 实体类别名 inner join 实体类中的set集合
+		from Customer c inner join c.setLinkMan
+	2.返回list,list里面每部分是数组形式
+		Query query = session.createQuery("from Customer c inner join c.setLinkMan");
+		List list = query.list();
+	
+2.左外连接
+	1.from 实体类名 实体类别名 left outer join 实体类中的set集合
+		from Customer c left outer join c.setLinkMan
+	2.返回list,list里面每部分是数组形式
+		Query query = session.createQuery("from Customer c left outer join c.setLinkMan");
+		List list = query.list();
+	
+3.右外连接
+		1.from 实体类名 实体类别名 right outer join 实体类中的set集合
+		from Customer c right outer join c.setLinkMan
+	2.返回list,list里面每部分是数组形式
+		Query query = session.createQuery("from Customer c right outer join c.setLinkMan");
+		List list = query.list();
+4.迫切内连接:底层与普通内连接实现一样，但list返回对象
+	1.from 实体类名 实体类别名 inner join fetch 实体类中的set集合
+		from Customer c inner join fetch c.setLinkMan
+	2.返回list,list里面每部分是数组形式
+		Query query = session.createQuery("from Customer c inner join fetch c.setLinkMan");
+		List list = query.list();
+5.迫切左外连接
+	1.from 实体类名 实体类别名 left outer join fetch 实体类中的set集合
+		from Customer c left outer join fetch c.setLinkMan
+	2.返回list,list里面每部分是数组形式
+		Query query = session.createQuery("from Customer c left outer join fetch c.setLinkMan");
+		List list = query.list();
+-----------------------------------------------------------------------------------------------
+hibernate检索策略
+1.立即查询:根据id查询，调用get方法，一调用get方法马上发送语句查询数据库
+	//发送语句
+	Customer customer = session.get(Customer.class,1);
+2.延迟查询:根据id查询，调用load方法，调用load方法不会马上发送语句查询数据，
+	只有想得到对象里面的值得时候才会发送语句查询数据库
+	//对象中只有id值
+	Customer customer = session.load(Customer.class,1);
+	//没发送语句
+	syso("customer.getId()");
+	//发送语句
+	syso("customer.getName()");
+延迟查询分类
+	1.类级别延迟
+		->根据id查询返回实体类对象，调用load方法不会马上发送语句
+	2.关联级别延迟
+		->查询某个客户，再查询这个客户的所有联系人，查询客户的所有联系人的过程是否需要延迟到；
+		1.默认延迟查询
+			Customer customer = session.get(Customer.class,1);
+			//得到set集合，但没有发送语句
+			Set<LinkMan> linkman = customer.getSetLinkMan();
+			//发送语句
+			syso(linkman.size());
+		2.在映射文件中进行配置实现
+			1.根据客户得到所有联系人，在客户映射文件中配置
+			2.在set标签上设置lazy为false;
+				lazy为extra时
+				要是什么值，只返回什么值
+				//发送语句，但只查询记录数量.
+				syso(linkman.size());
+		3.set标签的lazy和fetch属性
+		-----------------------------------
+		fetch   lazy   策略
+		-----------------------------------
+  默认：select  true
+		-----------------------------------
+		join 	flase	采用迫切左外连接检索
+		join 	true    采用迫切左外连接检索
+		join	extra	采用迫切左外连接检索
+		select	false	立即检索
+		select	true	延迟检索
+		select	extra	延迟检索（极其懒惰）
+		subselect false/true/extra  嵌套子查询（检索多个customer对象时）lazy属性决定检索策略
+		-----------------------------------
+		
+-------------------------------------------------------------------------------------
+批量抓取
+->查询所有客户，返回list集合，遍历list集合，得到每个客户，得到每个客户的所有联系人
+	1.在客户的配置文件中，set标签 batch-size="数量",一次发送多条语句，值越大效率越大。
+	
