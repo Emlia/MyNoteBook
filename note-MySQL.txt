@@ -1,6 +1,6 @@
 
 
-username:feihuang  password:hhf771631347
+username:feihuang  password:h*f7*******7
 -----------
 1.MySQL不区分大小写，但推荐关键字大写
 2.在数据库中所有字符串类型，日期类型，必须使用单引号，不能使用双引号.
